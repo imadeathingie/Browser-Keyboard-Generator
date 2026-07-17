@@ -1,0 +1,26 @@
+{
+  "name": "keyboard-case-generator",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser port of BlenderKeyboardGenerator: parametric keyboard case meshes from JSON, rendered with three.js, exported as STL.",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "verify": "tsx scripts/verify.ts public/samples/staggered-6x5.json"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/three": "^0.170.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21"
+  },
+  "keywords": [],
+  "author": ""
+}

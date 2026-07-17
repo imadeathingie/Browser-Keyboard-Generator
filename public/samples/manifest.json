@@ -1,0 +1,17 @@
+[
+  {
+    "id": "staggered-6x5",
+    "name": "Staggered 6×5 (fused skirt)",
+    "file": "staggered-6x5.json"
+  },
+  {
+    "id": "ortho-tented",
+    "name": "Ortho 12×4, tented 12°",
+    "file": "ortho-tented.json"
+  },
+  {
+    "id": "split-assembly",
+    "name": "Split pair (assembly demo)",
+    "file": "split-assembly.json"
+  }
+]

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keyboard Case Generator</title>
+  <meta name="description"
+    content="Generate 3D-printable keyboard plates, cases and baseplates from a JSON layout, right in the browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="logo-key" aria-hidden="true">K</div>
+      <h1>Keyboard Case Generator</h1>
+      <span class="tagline">JSON layout &rarr; printable case, in the browser</span>
+      <a href="https://github.com/imadeathingie/BlenderKeyboardGenerator"
+         target="_blank" rel="noopener">Blender original &nearr;</a>
+    </header>
+
+    <aside>
+      <div>
+        <label class="field-label" for="sample-select">Sample board</label>
+        <div class="row">
+          <select id="sample-select">
+            <option value="">&mdash; choose a sample &mdash;</option>
+          </select>
+          <button id="open-file" type="button" style="flex: 0 0 auto">Open JSON&hellip;</button>
+          <input id="file-input" type="file" accept=".json,application/json" hidden />
+        </div>
+      </div>
+
+      <div id="entry-row" hidden>
+        <label class="field-label" for="entry-select">Board in this file</label>
+        <select id="entry-select"></select>
+      </div>
+
+      <div style="display: flex; flex-direction: column; flex: 1; min-height: 0">
+        <label class="field-label" for="editor">Keyboard JSON</label>
+        <textarea id="editor" spellcheck="false"
+          placeholder="Paste a keyboard definition or keylist here&hellip;"></textarea>
+        <p class="hint">Edit freely, then rebuild &mdash; Ctrl+Enter works too.</p>
+      </div>
+
+      <div id="error-box" role="alert" hidden></div>
+
+      <button id="build" class="primary" type="button">Rebuild model</button>
+
+      <div>
+        <span class="field-label">Parts</span>
+        <div id="parts"></div>
+      </div>
+
+      <div>
+        <span class="field-label">Export</span>
+        <div class="row">
+          <button id="export-stl" type="button">Download STL</button>
+          <button id="export-json" type="button">Download JSON</button>
+        </div>
+        <p class="hint">STL contains the parts currently shown, merged, in mm.</p>
+      </div>
+    </aside>
+
+    <div id="viewport-wrap">
+      <div id="viewport" aria-label="3D preview of the keyboard case"></div>
+      <div id="viewport-toolbar">
+        <select id="render-mode" aria-label="Render mode">
+          <option value="edges" selected>Solid + edges</option>
+          <option value="solid">Solid</option>
+          <option value="wireframe">Wireframe</option>
+        </select>
+        <button id="frame" type="button" title="Fit the model in view">Fit view</button>
+      </div>
+      <div id="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
