@@ -1,0 +1,19 @@
+{
+    "name": "3.6x4_4",
+    "width": 8,
+    "height": 5,
+    "algo_cmt": "x|y|z_algo is used to calculate the position of each key.",
+    "x_algo": "x*key_1u + (3 if x > 5 or (x == 5 and y == 4) else 0)",
+    "skirt": true,
+    "linked_keys": [
+        {
+            "l": [ 4, 3, "br" ],
+            "r": [ 5, 4 ]
+        }
+    ],
+    "ignored_keys": [
+        [7,0], [7,1], [7,2], [7,3],
+        [6,0], [6,1], [6,2], 
+        [0,4], [1,4], [2,4], [3,4], [4,4]
+    ]
+}

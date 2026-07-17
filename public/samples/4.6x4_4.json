@@ -1,0 +1,20 @@
+{
+    "name": "4.6x4_4",
+    "width": 8,
+    "height": 5,
+    "x_algo": "x*key_1u + (3 if x > 5 or (x == 5 and y == 4) else 0)",
+    "y_cmt": "Note that the top left key is at [0,0] therefore, as the row increases, the y position decreases.",
+    "y_algo": "-y*key_1u - (12 if x == 0 else (10 if x == 1 else (2 if x == 2 else (4 if x >= 4 else 0))))",
+    "skirt": true,
+    "linked_keys": [
+        {
+            "l": [ 4, 3, "br" ],
+            "r": [ 5, 4 ]
+        }
+    ],
+    "ignored_keys": [
+        [7,0], [7,1], [7,2], [7,3],
+        [6,0], [6,1], [6,2], 
+        [0,4], [1,4], [2,4], [3,4], [4,4]
+    ]
+}

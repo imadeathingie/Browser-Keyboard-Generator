@@ -1,5 +1,5 @@
 [
-    {
+  {
     "name": "Staggered_6x5",
     "width": 7,
     "height": 5,
@@ -12,11 +12,11 @@
     "x_rot_algo": "x*3 if (x >= 5 and y == 4) else ((y-2)*(-10))",
     "y_rot_algo": "20 if (x == 6) else 10 if (x == 5 and y == 4) else 0",
     "z_rot_algo": "-30 if (x == 6) else -20 if (x == 5 and y == 4) else 0",
-    "flange_offset": 3.0,
-    "flange_z": 0.0,
+    "flange_offset": 3,
+    "flange_z": 0,
     "plate_lip": 1.5,
-    "plate_gap": 0.0,
-    "wall_base_z": 0.0,
+    "plate_gap": 0,
+    "wall_base_z": 0,
     "vertical_edges": false,
     "ignored_keys": [
       [
@@ -59,22 +59,22 @@
     ],
     "u_diff": [],
     "switch_profile": "asa",
-    "wall_thickness": 2.0,
+    "wall_thickness": 2,
     "skirt_flange": 1.4200000762939453,
     "skirt_mode": "angle",
-    "skirt_angle": 30.0,
-    "skirt_flare": 0.0,
+    "skirt_angle": 30,
+    "skirt_flare": 0,
     "skirt": true,
     "skirt_steps": 8,
-    "skirt_angle_end": 5.0,
+    "skirt_angle_end": 5,
     "skirt_step_out": 0.5,
     "skirt_profile": [
       {
         "fraction": 0.125,
-        "angle": 30.0
+        "angle": 30
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0.5
       },
       {
@@ -82,7 +82,7 @@
         "angle": 26.42857142857143
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0.5
       },
       {
@@ -90,7 +90,7 @@
         "angle": 22.857142857142858
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0.5
       },
       {
@@ -98,7 +98,7 @@
         "angle": 19.285714285714285
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0.5
       },
       {
@@ -106,7 +106,7 @@
         "angle": 15.714285714285715
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0.5
       },
       {
@@ -114,7 +114,7 @@
         "angle": 12.142857142857142
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0.5
       },
       {
@@ -122,12 +122,12 @@
         "angle": 8
       },
       {
-        "fraction": 0.0,
+        "fraction": 0,
         "out": 0
       },
       {
         "fraction": 0.125,
-        "angle": 0.0
+        "angle": 0
       }
     ],
     "inserts": [
@@ -136,115 +136,151 @@
         "row": 0,
         "x": 0,
         "y": 13,
-        "od": 8.0,
-        "id": 4.0,
+        "od": 8,
+        "id": 4,
         "rot": 0,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 4.0,
-        "leg_1": 4.0,
-        "leg_2": 4.0
+        "leg_0": 4,
+        "leg_1": 4,
+        "leg_2": 4
       },
       {
         "col": 0,
         "row": 0,
         "x": -9,
         "y": 10,
-        "od": 8.0,
-        "id": 4.0,
-        "rot": 45.0,
+        "od": 8,
+        "id": 4,
+        "rot": 45,
         "hole_x": 0,
         "hole_y": 0,
         "leg_0": 3.5,
-        "leg_1": 7.0,
-        "leg_2": 4.0
+        "leg_1": 7,
+        "leg_2": 4
       },
       {
         "col": 0,
         "row": 3,
         "x": -8,
         "y": -8,
-        "od": 8.0,
-        "id": 4.0,
-        "rot": 135.0,
+        "od": 8,
+        "id": 4,
+        "rot": 135,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 4.0,
-        "leg_1": 8.0,
-        "leg_2": 4.0
+        "leg_0": 4,
+        "leg_1": 8,
+        "leg_2": 4
       },
       {
         "col": 2,
         "row": 4,
         "x": -9,
         "y": -11,
-        "od": 8.0,
-        "id": 4.0,
+        "od": 8,
+        "id": 4,
         "rot": 135,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 3.0,
-        "leg_1": 7.0,
-        "leg_2": 3.0
+        "leg_0": 3,
+        "leg_1": 7,
+        "leg_2": 3
       },
       {
         "col": 5,
         "row": 4,
         "x": -13,
         "y": -8,
-        "od": 8.0,
-        "id": 4.0,
+        "od": 8,
+        "id": 4,
         "rot": 175,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 4.0,
-        "leg_1": 4.0,
-        "leg_2": 4.0
+        "leg_0": 4,
+        "leg_1": 4,
+        "leg_2": 4
       },
       {
         "col": 4,
         "row": 4,
         "x": 13,
         "y": -14,
-        "od": 8.0,
-        "id": 4.0,
+        "od": 8,
+        "id": 4,
         "rot": 175,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 4.0,
-        "leg_1": 4.0,
-        "leg_2": 4.0
+        "leg_0": 4,
+        "leg_1": 4,
+        "leg_2": 4
       },
       {
         "col": 5,
         "row": 1,
         "x": 10,
         "y": 0,
-        "od": 8.0,
-        "id": 4.0,
-        "rot": 270.0,
+        "od": 8,
+        "id": 4,
+        "rot": 270,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 4.0,
-        "leg_1": 4.0,
-        "leg_2": 4.0
+        "leg_0": 4,
+        "leg_1": 4,
+        "leg_2": 4
       },
       {
         "col": 5,
         "row": 4,
         "x": 12,
         "y": 8,
-        "od": 8.0,
-        "id": 4.0,
-        "rot": 325.0,
+        "od": 8,
+        "id": 4,
+        "rot": 325,
         "hole_x": 0,
         "hole_y": 0,
-        "leg_0": 4.0,
-        "leg_1": 4.0,
-        "leg_2": 4.0
+        "leg_0": 4,
+        "leg_1": 4,
+        "leg_2": 4
       }
     ],
-    "baseplate_thickness": 2.0,
-    "insert_clearance_d": 3.0
+    "baseplate_thickness": 2,
+    "insert_clearance_d": 3
+  },
+  {
+    "name": "Staggered_6x5_Pair",
+    "items": [
+      {
+        "name": "Staggered_6x5",
+        "pos": [
+          -120,
+          0,
+          0
+        ],
+        "rot": [
+          0,
+          0,
+          -20
+        ]
+      },
+      {
+        "name": "Staggered_6x5",
+        "pos": [
+          120,
+          0,
+          0
+        ],
+        "rot": [
+          0,
+          0,
+          20
+        ],
+        "mirror": [
+          1,
+          0,
+          0
+        ]
+      }
+    ]
   }
 ]
