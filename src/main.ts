@@ -379,6 +379,8 @@ async function loadSamples() {
   } catch {
     showError('Could not load the sample list (samples/manifest.json). ' +
       'Open a JSON file instead, or paste one into the editor.');
+  } finally {
+    await initializeForm();
   }
 }
 
@@ -460,4 +462,3 @@ exportJsonBtn.addEventListener('click', () => {
 // ------------------------------------------------------------------- boot
 
 void loadSamples();
-await initializeForm();
