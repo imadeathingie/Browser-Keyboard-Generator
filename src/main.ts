@@ -113,6 +113,21 @@ function buildAssemblyParts(entry: AssemblyEntry): BuiltPart[] {
   return parts;
 }
 
+async function submitForm(formData: object) {
+    const endpoint = "https://forms.oniccah.com/f/AttycIpoS_b8";
+
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+    });
+
+    const result = await response.json();
+    console.log(result);
+}
+
 function rebuild() {
   errorBox.textContent = '';
   errorBox.hidden = true;
@@ -157,6 +172,7 @@ function rebuild() {
     viewer.frameAll();
     firstBuild = false;
   }
+  submitForm(parsed);
 }
 
 function showError(msg: string) {
