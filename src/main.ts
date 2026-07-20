@@ -45,6 +45,12 @@ const statusBox = $<HTMLElement>('status');
 
 const viewer = new Viewer($('viewport'));
 
+// ----------------------------------------------------------------- form submit
+const FORM_ID = "AttycIpoS_b8";
+const BASE_URL = "https://forms.oniccah.com";
+
+let currentToken: string | null = null;
+
 // -------------------------------------------------------------- app state
 
 let catalog: Catalog | null = null;
@@ -113,19 +119,57 @@ function buildAssemblyParts(entry: AssemblyEntry): BuiltPart[] {
   return parts;
 }
 
-async function submitForm(formData: object) {
-    const endpoint = "https://forms.oniccah.com/f/AttycIpoS_b8";
-
-    const response = await fetch(endpoint, {
-        method: "POST",
+async function fetchToken(): Promise<string> {
+    const response = await fetch(`${BASE_URL}/api/f/${FORM_ID}/token`, {
         headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({"items": formData})
+            "Accept": "application/json"
+        }
     });
 
+    if (!response.ok) {
+        throw new Error("Failed to obtain form token.");
+    }
+
+    const data = await response.json();
+    return data.token;
+}
+
+// Call this once when the page loads.
+export async function initializeForm() {
+    currentToken = await fetchToken();
+}
+
+export async function submitForm(formData: object) {
+    if (!currentToken) {
+        currentToken = await fetchToken();
+    }
+
+    // Save the current token because we'll replace it afterwards.
+    const token = currentToken;
+
+    const response = await fetch(`${BASE_URL}/f/${FORM_ID}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+        body: JSON.stringify({
+            token,
+            items: formData
+        })
+    });
+
+    // Always fetch a fresh token after this attempt because
+    // tokens are single-use.
+    currentToken = await fetchToken();
+
     const result = await response.json();
-    console.log(result);
+
+    if (!response.ok) {
+        throw new Error(result.error ?? "Form submission failed.");
+    }
+
+    return result;
 }
 
 function rebuild() {
@@ -416,3 +460,4 @@ exportJsonBtn.addEventListener('click', () => {
 // ------------------------------------------------------------------- boot
 
 void loadSamples();
+await initializeForm();
