@@ -172,7 +172,7 @@ export async function submitForm(formData: object) {
     return result;
 }
 
-function rebuild() {
+function rebuild(manual = false) {
   errorBox.textContent = '';
   errorBox.hidden = true;
 
@@ -216,7 +216,9 @@ function rebuild() {
     viewer.frameAll();
     firstBuild = false;
   }
-  submitForm(parsed);
+  if (manual) {
+    submitForm(parsed);
+  }
 }
 
 function showError(msg: string) {
@@ -419,11 +421,13 @@ fileInput.addEventListener('change', async () => {
 
 // ---------------------------------------------------------------- actions
 
-buildBtn.addEventListener('click', rebuild);
+buildBtn.addEventListener('click', _ => {
+  rebuild(true);
+});
 editor.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     e.preventDefault();
-    rebuild();
+    rebuild(true);
   }
 });
 
