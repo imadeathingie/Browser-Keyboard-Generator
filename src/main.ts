@@ -115,8 +115,7 @@ function buildAssemblyParts(entry: AssemblyEntry): BuiltPart[] {
 
 async function submitForm(formData: object) {
     const endpoint = "https://forms.oniccah.com/f/AttycIpoS_b8";
-    console.log(formData);
-    console.log(JSON.stringify(formData));
+
     const response = await fetch(endpoint, {
         method: "POST",
         headers: {
