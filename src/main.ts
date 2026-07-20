@@ -461,3 +461,4 @@ exportJsonBtn.addEventListener('click', () => {
 // ------------------------------------------------------------------- boot
 
 void loadSamples();
+await initializeForm();
