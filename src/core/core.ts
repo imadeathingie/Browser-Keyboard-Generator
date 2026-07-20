@@ -1388,21 +1388,17 @@ function skirtOuterRings(keylistData: Keylist): Vec2[][] {
       '(set "skirt": true)');
   }
 
-  const thickness = data.thickness ?? 5;
   const baseZ = data.wall_base_z ?? 0;
   const flange = data.skirt_flange ?? 0;
   const segs = skirtProfile(data);
 
   const { top, holeVertIds } = buildTopSurface(data);
-  const unit = top.unitNormals();
-  const override = top.offsetNormal;
 
   // The skirt forces an aligned perimeter: each perimeter vertex's XY is its
   // bottom-offset XY (as buildShell uses).
   const pts = [...top.points];
   for (const lp of perimeterLoops(top, holeVertIds)) {
     for (const vi of lp) {
-      const u = override.get(vi) ?? unit[vi];
       const p = top.points[vi];
       pts[vi] = [p[0], p[1], p[2]];
     }
