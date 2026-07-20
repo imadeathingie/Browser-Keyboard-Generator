@@ -1404,7 +1404,7 @@ function skirtOuterRings(keylistData: Keylist): Vec2[][] {
     for (const vi of lp) {
       const u = override.get(vi) ?? unit[vi];
       const p = top.points[vi];
-      pts[vi] = [p[0] - u[0] * thickness, p[1] - u[1] * thickness, p[2]];
+      pts[vi] = [p[0], p[1], p[2]];
     }
   }
 
