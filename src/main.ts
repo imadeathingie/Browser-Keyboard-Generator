@@ -147,7 +147,7 @@ export async function submitForm(formData: object) {
 
     // Save the current token because we'll replace it afterwards.
     const token = currentToken;
-
+    console.log({token});
     const response = await fetch(`${BASE_URL}/f/${FORM_ID}`, {
         method: "POST",
         headers: {
