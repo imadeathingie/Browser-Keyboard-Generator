@@ -944,14 +944,14 @@ export function buildShell(keylistData: Keylist): Mesh {
     }
   }
 
-  // --- Vertical outer perimeter (move each outer TOP vertex above its
-  //     bottom vertex) so the plate drops straight into a wall recess. -----
+  // --- Vertical outer perimeter (move each outer BOTTOM vertex below its
+  //     TOP vertex) so the plate drops straight into a wall recess. -----
   if (verticalEdges) {
     for (const lp of perimeterLoops(top, holeVertIds)) {
       for (const vi of lp) {
-        const [bx, by] = botPts[vi];
-        const tz = topPts[vi][2];
-        topPts[vi] = [bx, by, tz];
+        const [tx, ty] = topPts[vi];
+        const bz = botPts[vi][2];
+        botPts[vi] = [tx, ty, bz];
       }
     }
   }
