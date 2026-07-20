@@ -131,6 +131,7 @@ async function fetchToken(): Promise<string> {
     }
 
     const data = await response.json();
+    console.log(data);
     return data.token;
 }
 
