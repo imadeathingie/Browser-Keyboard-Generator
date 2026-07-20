@@ -41,8 +41,8 @@ export class Viewer {
   constructor(container: HTMLElement) {
     this.container = container;
 
-    this.scene.background = new THREE.Color(0x15181d);
-    this.scene.fog = new THREE.Fog(0x15181d, 900, 2600);
+    this.scene.background = new THREE.Color(0xE8DBC0); // 0x15181d
+    this.scene.fog = new THREE.Fog(0xE8DBC0, 900, 2600);
 
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000);
     // The generator's data is Z-up (mm); tell the camera so orbiting

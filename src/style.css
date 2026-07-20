@@ -2,15 +2,16 @@
    Machine-shop viewport: graphite panels, signal-amber accent (keycap
    legend / CNC caution), mono readouts. */
 :root {
-  --ink: #15181d;        /* viewport + page ground */
-  --panel: #1c2026;      /* sidebar */
-  --panel-2: #23282f;    /* inputs, raised surfaces */
-  --line: #313843;
-  --text: #e8e6e0;
-  --muted: #8b93a1;
-  --amber: #f0b542;      /* single accent */
+
+  --ink: #E8DBC0;        /* viewport + page ground */
+  --panel: #E8DBC0;      /* sidebar */
+  --panel-2: #F7F2E7;    /* inputs, raised surfaces */
+  --line: rgba(43, 38, 32, 0.14);
+  --text: #2B2620;
+  --muted: #8A8071;
+  --amber: #B98B3E;      /* single accent */
   --amber-ink: #26200f;
-  --bad: #e26d5a;
+  --bad: #E85D2C;
   --radius: 6px;
   --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
@@ -140,8 +141,7 @@ button.primary:hover { background: #f6c464; }
 
 select:focus-visible, button:focus-visible, textarea:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--amber);
-  outline-offset: 1px;
+  outline: 1px solid var(--muted);
 }
 
 #editor {
@@ -155,7 +155,6 @@ input:focus-visible {
   line-height: 1.5;
   tab-size: 2;
   white-space: pre;
-  color: #d7dbe2;
 }
 
 .hint {
@@ -221,7 +220,7 @@ input:focus-visible {
   z-index: 2;
 }
 #viewport-toolbar select, #viewport-toolbar button {
-  background: rgba(28, 32, 38, 0.9);
+  background: var(--panel-2);
   backdrop-filter: blur(4px);
 }
 
