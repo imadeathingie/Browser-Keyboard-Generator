@@ -44,6 +44,34 @@ function place(pLocal: Vec3, key: KeyEntry): Vec3 {
   return [px + key.pos.x, py + key.pos.y, pz + key.pos.z];
 }
 
+/**
+ * Inverse of rotXYZ. rotXYZ applies Z, then Y, then X; to undo it we apply the
+ * inverse rotations in reverse order: X, then Y, then Z.
+ */
+function unrotXYZ(p: Vec3, rxDeg: number, ryDeg: number, rzDeg: number): Vec3 {
+  let [x, y, z] = p;
+  const rz = rad(rzDeg), ry = rad(ryDeg), rx = rad(rxDeg);
+  // X^-1
+  [y, z] = [y * Math.cos(rx) + z * Math.sin(rx), -y * Math.sin(rx) + z * Math.cos(rx)];
+  // Y^-1
+  [x, z] = [x * Math.cos(ry) - z * Math.sin(ry), x * Math.sin(ry) + z * Math.cos(ry)];
+  // Z^-1
+  [x, y] = [x * Math.cos(rz) + y * Math.sin(rz), -x * Math.sin(rz) + y * Math.cos(rz)];
+  return [x, y, z];
+}
+
+/**
+ * Inverse of place: bring a WORLD point into a key's local frame (undo the
+ * translate, then the rotation). In that frame the switch cutout is the
+ * axis-aligned square [-hole/2, hole/2] at z=0, which is what lets us test
+ * whether a face crosses the hole accounting for the key's rotation.
+ */
+function unplace(pWorld: Vec3, key: KeyEntry): Vec3 {
+  const w: Vec3 = [pWorld[0] - key.pos.x, pWorld[1] - key.pos.y, pWorld[2] - key.pos.z];
+  const r = key.rotation;
+  return unrotXYZ(w, r.x, r.y, r.z);
+}
+
 function norm(a: Vec3): Vec3 {
   const m = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
   if (m < 1e-12) return [0, 0, 0];
@@ -484,6 +512,11 @@ function buildTopSurface(keylistData: Keylist): TopBuild {
     top.face(patchTop);
   }
 
+  // Repair any junction triangles that ended up draped over a switch cutout
+  // (e.g. a linked-key bridge meeting a corner patch on a rotated key) by
+  // flipping the shared diagonal off the hole.
+  flipFacesOffHoles(top, keys, key1u, holeSize, data.thickness ?? 5.0);
+
   return { top, holeVertIds };
 }
 
@@ -564,6 +597,145 @@ function pointInPoly(p: Vec2, poly: Vec2[]): boolean {
     }
   }
   return inside;
+}
+
+/**
+ * True if two 2D polygons overlap (a vertex of one inside the other, or any
+ * pair of edges crossing).
+ */
+function polysOverlap(A: Vec2[], B: Vec2[]): boolean {
+  for (const p of A) if (pointInPoly(p, B)) return true;
+  for (const p of B) if (pointInPoly(p, A)) return true;
+  const na = A.length, nb = B.length;
+  for (let i = 0; i < na; i++) {
+    for (let j = 0; j < nb; j++) {
+      if (segsProperlyCross(A[i], A[(i + 1) % na], B[j], B[(j + 1) % nb])) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Repair corner/bridge triangles that drape across a neighbouring switch
+ * cutout.
+ *
+ * At a junction between keys — most visibly where a `linked_keys` bridge meets
+ * a diagonal corner patch — the small gap is sealed by two triangles forming a
+ * quad. Those triangles come from separate builders (the bridge in
+ * buildTopSurface, the patch in diagonalCornerPatches) that each only know
+ * three of the quad's four corners, so they can only share ONE diagonal. When
+ * that diagonal is the wrong one, both triangles fan out over an adjacent key's
+ * switch hole. Neither builder can pick the other diagonal alone (it needs the
+ * fourth vertex), so we fix it here on the assembled surface: find such a
+ * shared edge and flip it to the opposite diagonal when that lifts every
+ * triangle clear of the holes.
+ *
+ * The hole test runs in each KEY'S OWN rotated frame — the cutout is only a
+ * clean axis-aligned square there. The crossing only appears once keys are
+ * tilted, so a flat top-down / XY test would both miss real crossings and flag
+ * false ones on angled keys.
+ */
+function flipFacesOffHoles(
+  top: TopSurface, keys: KeyEntry[], key1u: number,
+  holeSize: number, thickness: number,
+): void {
+  if (keys.length === 0) return;
+
+  const half = holeSize / 2;
+  const holeSq: Vec2[] = [[-half, half], [-half, -half], [half, -half], [half, half]];
+  const kinfo: [Vec3, KeyEntry][] =
+    keys.map(k => [[k.pos.x, k.pos.y, k.pos.z], k]);
+  const ztol = thickness + 1;
+  const reach2 = (1.3 * key1u) ** 2;
+
+  const overHole = (triWorld: Vec3[]): boolean => {
+    const cx = (triWorld[0][0] + triWorld[1][0] + triWorld[2][0]) / 3;
+    const cy = (triWorld[0][1] + triWorld[1][1] + triWorld[2][1]) / 3;
+    for (const [pos, k] of kinfo) {
+      if ((cx - pos[0]) ** 2 + (cy - pos[1]) ** 2 > reach2) continue;
+      const loc = triWorld.map(p => unplace(p, k));
+      // Only faces sitting in this key's plane can occlude its cutout.
+      if (Math.abs((loc[0][2] + loc[1][2] + loc[2][2]) / 3) > ztol) continue;
+      if (polysOverlap(loc.map(p => [p[0], p[1]] as Vec2), holeSq)) return true;
+    }
+    return false;
+  };
+
+  const P = top.points;
+  const faces = top.faces;
+
+  // Map every triangle edge to (faceIndex, oppositeVertex).
+  const edgeFaces = new Map<string, [number, number][]>();
+  for (let fi = 0; fi < faces.length; fi++) {
+    const f = faces[fi];
+    if (f.length !== 3) continue;
+    const [a, b, c] = f;
+    for (const [u, v, w] of [[a, b, c], [b, c, a], [c, a, b]] as const) {
+      const k = edgeKey(u, v);
+      const lst = edgeFaces.get(k);
+      if (lst) lst.push([fi, w]);
+      else edgeFaces.set(k, [[fi, w]]);
+    }
+  }
+
+  const flipped = new Set<number>();
+  const changes = new Map<number, Face>();
+  for (const [edge, lst] of edgeFaces) {
+    if (lst.length !== 2) continue;
+    const [[fi1, w1], [fi2, w2]] = lst;
+    if (flipped.has(fi1) || flipped.has(fi2)) continue;
+    const [u, v] = edge.split(',').map(Number);
+    const a = w1, b = w2;              // the two off-diagonal tips
+    if (a === b || edgeFaces.has(edgeKey(a, b))) continue; // dup / non-manifold
+
+    const cur1: Vec3[] = [P[u], P[v], P[a]];
+    const cur2: Vec3[] = [P[u], P[v], P[b]];
+    if (!(overHole(cur1) || overHole(cur2))) continue;     // current split fine
+
+    const new1: Vec3[] = [P[a], P[b], P[u]];
+    const new2: Vec3[] = [P[a], P[b], P[v]];
+    if (overHole(new1) || overHole(new2)) continue;        // flip wouldn't help
+
+    // Keep the surface orientation: match each new triangle's normal to the
+    // two originals' combined normal.
+    const n1 = faceNormal(faces[fi1].map(i => P[i]));
+    const n2 = faceNormal(faces[fi2].map(i => P[i]));
+    const ref: Vec3 = [n1[0] + n2[0], n1[1] + n2[1], n1[2] + n2[2]];
+
+    const oriented = (triIdx: Face, triWorld: Vec3[]): Face => {
+      const nrm = faceNormal(triWorld);
+      if (nrm[0] * ref[0] + nrm[1] * ref[1] + nrm[2] * ref[2] < 0) {
+        return [triIdx[0], triIdx[2], triIdx[1]];
+      }
+      return triIdx;
+    };
+
+    changes.set(fi1, oriented([a, b, u], new1));
+    changes.set(fi2, oriented([a, b, v], new2));
+    flipped.add(fi1);
+    flipped.add(fi2);
+  }
+
+  if (changes.size === 0) return;
+
+  // Apply. Update accumulated vertex normals incrementally (remove the old face
+  // contribution, add the new) so untouched vertices stay bit-identical.
+  for (const [fi, newf] of changes) {
+    const oldf = faces[fi];
+    const on = faceNormal(oldf.map(i => P[i]));
+    for (const i of oldf) {
+      top.normals[i][0] -= on[0];
+      top.normals[i][1] -= on[1];
+      top.normals[i][2] -= on[2];
+    }
+    const nn = faceNormal(newf.map(i => P[i]));
+    for (const i of newf) {
+      top.normals[i][0] += nn[0];
+      top.normals[i][1] += nn[1];
+      top.normals[i][2] += nn[2];
+    }
+    faces[fi] = newf;
+  }
 }
 
 const coincident = (a: Vec2, b: Vec2, eps = 1e-9) =>
