@@ -1052,19 +1052,27 @@ function stitchColumns(
  * plate grows fused walls sweeping down to `wall_base_z`. Returns one
  * closed manifold.
  */
-export function buildShell(keylistData: Keylist): Mesh {
-  const data = resolveKeylist(keylistData);
+/**
+ * Apply the whole-plate tent/pitch tilt to a built TopSurface, compute the
+ * constant-thickness offset bottom, and lift the result so the plate clears the
+ * base plane. Mutates `top` in place and returns the bottom points.
+ *
+ * Shared by buildShell and skirtOuterRings so the case and the baseplate are
+ * derived from the SAME tilted, lifted perimeter. Previously only buildShell
+ * tilted the plate, so with a non-zero tent_angle/pitch_angle the baseplate was
+ * generated from the UNTILTED perimeter and no longer lined up with the case it
+ * is supposed to close (the skirt's outward flare was wrong too, since it
+ * scales with each vertex's height above the base).
+ *
+ * With no tilt requested this is exactly the original bottom-offset step, so
+ * untilted boards are unaffected.
+ */
+function tiltAndOffset(data: Keylist, top: TopSurface): Vec3[] {
   const thickness = data.thickness ?? 5;
-  let verticalEdges = data.vertical_edges ?? true;
-  // A fused skirt REQUIRES an aligned (vertical) perimeter.
-  if (data.skirt ?? false) verticalEdges = true;
-
-  const { top, holeVertIds } = buildTopSurface(data);
-
-  // --- Tent / pitch of the whole plate as a rigid body -------------------
   const tentAngle = Number(data.tent_angle ?? 0) || 0;
   const pitchAngle = Number(data.pitch_angle ?? 0) || 0;
   const tilted = Boolean(tentAngle || pitchAngle);
+
   if (tilted) {
     const pts = top.points;
     const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
@@ -1074,6 +1082,8 @@ export function buildShell(keylistData: Keylist): Mesh {
       return [q[0] + cx, q[1] + cy, q[2]];
     };
     top.points = pts.map(tilt);
+    // Rotate accumulated face normals and per-vertex offset normals the same
+    // way, so the bottom still drops perpendicular to the (now tilted) top.
     top.normals = top.normals.map(nz =>
       rotXYZ([nz[0], nz[1], nz[2]], pitchAngle, tentAngle, 0) as [number, number, number]);
     const rotated = new Map<number, Vec3>();
@@ -1086,10 +1096,9 @@ export function buildShell(keylistData: Keylist): Mesh {
   // --- Offset bottom ------------------------------------------------------
   const unit = top.unitNormals();
   const override = top.offsetNormal;
-  let topPts = [...top.points];
   const botPts: Vec3[] = [];
-  for (let vi = 0; vi < topPts.length; vi++) {
-    const p = topPts[vi];
+  for (let vi = 0; vi < top.points.length; vi++) {
+    const p = top.points[vi];
     const u = override.get(vi) ?? unit[vi];
     botPts.push([
       p[0] - u[0] * thickness,
@@ -1102,19 +1111,36 @@ export function buildShell(keylistData: Keylist): Mesh {
   if (tilted) {
     const baseZ0 = Number(data.wall_base_z ?? 0);
     const minClear = Number(data.plate_min_wall ?? 1);
-    const minZ = Math.min(
-      Math.min(...top.points.map(p => p[2])),
-      Math.min(...botPts.map(p => p[2])),
-    );
+    // Loop rather than Math.min(...arr): the spread would blow the argument
+    // limit on large boards.
+    let minZ = Infinity;
+    for (const p of top.points) if (p[2] < minZ) minZ = p[2];
+    for (const p of botPts) if (p[2] < minZ) minZ = p[2];
     if (minZ < baseZ0 + minClear) {
       const dz = baseZ0 + minClear - minZ;
-      top.points = top.points.map(p => [p[0], p[1], p[2] + dz]);
-      topPts = topPts.map(p => [p[0], p[1], p[2] + dz]);
+      top.points = top.points.map(p => [p[0], p[1], p[2] + dz] as Vec3);
       for (let i = 0; i < botPts.length; i++) {
         botPts[i] = [botPts[i][0], botPts[i][1], botPts[i][2] + dz];
       }
     }
   }
+
+  return botPts;
+}
+
+export function buildShell(keylistData: Keylist): Mesh {
+  const data = resolveKeylist(keylistData);
+  let verticalEdges = data.vertical_edges ?? true;
+  // A fused skirt REQUIRES an aligned (vertical) perimeter.
+  if (data.skirt ?? false) verticalEdges = true;
+
+  const { top, holeVertIds } = buildTopSurface(data);
+
+  // --- Tent/pitch tilt, offset bottom and clearance lift. Done in
+  //     tiltAndOffset so skirtOuterRings (the baseplate) can apply exactly the
+  //     same transform and stay aligned with the case. ---
+  const botPts = tiltAndOffset(data, top);
+  let topPts = [...top.points];
 
   // --- Vertical outer perimeter (move each outer BOTTOM vertex below its
   //     TOP vertex) so the plate drops straight into a wall recess. -----
@@ -1566,15 +1592,15 @@ function skirtOuterRings(keylistData: Keylist): Vec2[][] {
 
   const { top, holeVertIds } = buildTopSurface(data);
 
-  // The skirt forces an aligned perimeter: each perimeter vertex's XY is its
-  // bottom-offset XY (as buildShell uses).
+  // Apply the SAME whole-plate tent/pitch tilt and clearance lift that
+  // buildShell applies, so the baseplate outline is taken from the tilted
+  // perimeter the case actually lands on. Without this the baseplate is built
+  // from the untilted plate and does not line up with the case, and the skirt
+  // flare below is wrong as well because it scales with each vertex's height
+  // above the base plane. The skirt forces an aligned (vertical) perimeter, so
+  // each perimeter vertex's XY is its bottom-offset XY.
+  tiltAndOffset(data, top);
   const pts = [...top.points];
-  for (const lp of perimeterLoops(top, holeVertIds)) {
-    for (const vi of lp) {
-      const p = top.points[vi];
-      pts[vi] = [p[0], p[1], p[2]];
-    }
-  }
 
   const loops = perimeterLoops(top, holeVertIds);
   if (loops.length === 0) return [];
