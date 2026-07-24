@@ -352,7 +352,45 @@ function diagonalCornerPatches(
           pts.push(corners[cornerName[name]]);
         }
       }
-      if (pts.length >= 3) patches.push(pts);
+      if (pts.length < 3) continue;
+
+      // A patch is only meaningful when it SEALS the small notch left between
+      // the surrounding edge bridges — this function's whole premise is a
+      // block whose keys' corners "nearly meet". The A->C->D->B corner order
+      // assumes that too: with the cells near their nominal grid slots the
+      // polygon comes out CCW viewed from above, the winding every top face
+      // uses.
+      //
+      // When a key is displaced well away from its grid slot and rotated (an
+      // offset thumb key, say), the shared corner between two bridges can
+      // bulge OUTWARD instead of leaving a notch. What we would emit is then
+      // not a gap filler at all: it lays a chord across the OUTSIDE of the
+      // boundary and folds back over the neighbouring bridges, leaving a stray
+      // flap of material with an inverted (downward) normal. The junction is
+      // already closed by the bridges meeting at that shared corner, so the
+      // right answer is to emit nothing and let the perimeter run around it.
+      //
+      // Require BOTH symptoms before dropping a patch:
+      //   * inverted   — the corner order came out backwards, so the corners
+      //                  are not arranged around a notch, and
+      //   * non-local  — the corners span more than one key pitch, so this
+      //                  block is not a real junction at all.
+      // A patch can legitimately come out inverted while still sealing a
+      // genuine, tight notch (steeply tilted keys do this); those stay, and
+      // the shared-diagonal repair in flipFacesOffHoles tidies them up. Only a
+      // patch that is backwards AND stretched across a non-junction is
+      // discarded.
+      let span = 0;
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i][0] - pts[j][0];
+          const dy = pts[i][1] - pts[j][1];
+          span = Math.max(span, Math.sqrt(dx * dx + dy * dy));
+        }
+      }
+      if (faceNormal(pts)[2] <= 0 && span > key1u) continue;
+
+      patches.push(pts);
     }
   }
   return patches;
@@ -517,6 +555,11 @@ function buildTopSurface(keylistData: Keylist): TopBuild {
   // flipping the shared diagonal off the hole.
   flipFacesOffHoles(top, keys, key1u, holeSize, data.thickness ?? 5.0);
 
+  // Split any warped polygon into explicit triangles, so the top surface, the
+  // offset underside built from it and every downstream exporter all agree on
+  // how it is divided. Runs last, after the repair above has had its say.
+  triangulateNonplanarFaces(top);
+
   return { top, holeVertIds };
 }
 
@@ -635,6 +678,68 @@ function polysOverlap(A: Vec2[], B: Vec2[]): boolean {
  * tilted, so a flat top-down / XY test would both miss real crossings and flag
  * false ones on angled keys.
  */
+/**
+ * Replace every NON-PLANAR polygon in the surface with explicit triangles.
+ *
+ * A warped quad does not define a surface on its own: it has to be split along
+ * one of its two diagonals, and which one is chosen changes the shape.
+ * buildShell emits the underside as the same loops with REVERSED winding, so a
+ * consumer that fan-triangulates from the first vertex (three.js, an STL
+ * writer, Blender) splits the top quad [a,b,c,d] on a-c but the reversed
+ * bottom [d,c,b,a] on d-b — the OPPOSITE diagonal. The two surfaces then are
+ * not parallel, and wherever a quad's warp approaches the plate thickness they
+ * cross: the underside pierces up through the top, leaving a visible sliver of
+ * inverted surface. Bridges between keys that differ a lot in tilt and height
+ * (an offset, rotated thumb key) warp the most and hit this first.
+ *
+ * Splitting here, once, removes the ambiguity for everyone downstream: top,
+ * underside and any exporter all use the same diagonal. We take the shorter
+ * diagonal, which keeps the two triangles closest to the intended surface.
+ *
+ * Only the face list is rewritten. The accumulated vertex normals are left
+ * exactly as the original polygons set them, so unitNormals() — and with it
+ * the constant-thickness bottom offset — is completely unaffected. The
+ * boundary is untouched too: the four original edges each still appear once
+ * and the new diagonal appears twice (interior), so perimeter loops, walls and
+ * skirts are unchanged. Planar faces are left alone, since for those the
+ * diagonal makes no difference to the surface.
+ */
+function triangulateNonplanarFaces(top: TopSurface, tol = 1e-9): void {
+  const out: Face[] = [];
+  const P = top.points;
+
+  for (const f of top.faces) {
+    if (f.length < 4) { out.push(f); continue; }
+
+    const pts = f.map(i => P[i]);
+    const nrm = norm(faceNormal(pts));
+    const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+    const cz = pts.reduce((s, p) => s + p[2], 0) / pts.length;
+    let warp = 0;
+    for (const p of pts) {
+      const dz = Math.abs((p[0] - cx) * nrm[0] + (p[1] - cy) * nrm[1] +
+                          (p[2] - cz) * nrm[2]);
+      if (dz > warp) warp = dz;
+    }
+    if (warp <= tol) { out.push(f); continue; }
+
+    if (f.length === 4) {
+      const [a, b, c, d] = f;
+      const d2 = (i: number, j: number) => {
+        const pi = P[i], pj = P[j];
+        return (pi[0] - pj[0]) ** 2 + (pi[1] - pj[1]) ** 2 + (pi[2] - pj[2]) ** 2;
+      };
+      if (d2(a, c) <= d2(b, d)) { out.push([a, b, c]); out.push([a, c, d]); }
+      else { out.push([b, c, d]); out.push([b, d, a]); }
+    } else {
+      for (let k = 1; k < f.length - 1; k++) out.push([f[0], f[k], f[k + 1]]);
+    }
+  }
+
+  top.faces = out;
+}
+
 function flipFacesOffHoles(
   top: TopSurface, keys: KeyEntry[], key1u: number,
   holeSize: number, thickness: number,
